@@ -16,6 +16,50 @@ SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
 
+--
+-- Name: deleteclientbyid(integer); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.deleteclientbyid(p_cliente_id integer) RETURNS void
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+    v_nombre_usuario VARCHAR;
+BEGIN
+    SELECT nombre_usuario INTO v_nombre_usuario FROM cliente WHERE id_cliente = p_cliente_id;
+
+
+    DELETE FROM cliente WHERE id_cliente = p_cliente_id;
+
+    EXECUTE format('REVOKE ALL PRIVILEGES ON ALL TABLES IN SCHEMA public FROM %I', v_nombre_usuario);
+
+    EXECUTE format('DROP USER %I', v_nombre_usuario);
+END;
+$$;
+
+
+ALTER FUNCTION public.deleteclientbyid(p_cliente_id integer) OWNER TO postgres;
+
+--
+-- Name: insertnewclient(character varying, character varying, character varying, character varying, boolean, timestamp without time zone); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.insertnewclient(p_nombre character varying, p_apellido character varying, p_nombre_usuario character varying, p_correo_electronico character varying, p_activo boolean, p_fecha_registro timestamp without time zone) RETURNS void
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    INSERT INTO cliente (nombre, apellido, nombre_usuario, correo_electronico, activo, fecha_registro) 
+    VALUES (p_nombre, p_apellido, p_nombre_usuario, p_correo_electronico, p_activo, p_fecha_registro);
+
+    EXECUTE format('CREATE USER %I WITH PASSWORD %L', p_nombre_usuario, p_correo_electronico);
+
+    EXECUTE format('GRANT SELECT ON TABLE pelicula TO %I', p_nombre_usuario);
+END;
+$$;
+
+
+ALTER FUNCTION public.insertnewclient(p_nombre character varying, p_apellido character varying, p_nombre_usuario character varying, p_correo_electronico character varying, p_activo boolean, p_fecha_registro timestamp without time zone) OWNER TO postgres;
+
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
@@ -322,7 +366,8 @@ COPY public.clasificacion_pelicula (id_clasificacion, id_pelicula) FROM stdin;
 --
 
 COPY public.cliente (id_cliente, nombre, apellido, nombre_usuario, correo_electronico, activo, fecha_registro) FROM stdin;
-27	Manuel	Martinez	manuel	manuel@gmail.com	t	2024-07-01 20:53:15.537
+32	Admin del	Sistemas	admin	admin@admin.che	t	2024-07-02 18:58:52.55
+34	Manuel	Martinez	manuel	manuel@gmail.com	t	2024-07-02 19:42:03.205
 \.
 
 
@@ -358,15 +403,16 @@ COPY public.idioma_pelicula (id_idioma, id_pelicula) FROM stdin;
 --
 
 COPY public.pelicula (id_pelicula, titulo, descripcion, direccion_url, portada_url, duracion, ano_estreno, fecha_registro) FROM stdin;
-2	venom 3	brutal pelicula de superheroes	https://www.youtube.com/watch?v=ncOH8-d4BYQ	https://m.media-amazon.com/images/M/MV5BYmIxMGNmOGYtMDQ4ZS00N2M0LWFiNWMtMWVlYjVkNzkzODc4XkEyXkFqcGc@._V1_.jpg	120	2020	2024-06-29 21:36:38.423
 5	moana 2	una pelicula mas de disne	https://www.youtube.com/watch?v=oG_lt31kFfc	https://lumiere-a.akamaihd.net/v1/images/garland_teaser1_poster_las_168c6658.jpeg	120	2022	2024-06-30 02:15:18.056
 8	Tarot de la Muerte	Película de terror y suspenso.	https://www.youtube.com/watch?v=tLttLNQLq6o	https://www.sonypictures.com.mx/sites/mexico/files/2024-02/TAR_1400x2100.jpg	160	2021	2024-07-01 18:35:40.406
 9	Nosferatus	Pelicula de terror	https://www.youtube.com/watch?v=jGcPEBRd2fE	https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTfrVRY8sL-AqJFqHBIFU3kvCoZW2j0gKPHPw&s	130	2024	2024-07-01 18:37:25.541
 10	Abigail	Pelicula de terror	https://www.youtube.com/watch?v=E8KysONydqc	https://es.web.img3.acsta.net/pictures/24/02/07/17/44/0885934.jpg	140	2024	2024-07-01 18:39:55.038
-11	Red One	Pelicula de accion	https://www.youtube.com/watch?v=mFQ5AjUUQcU	https://soundtrackost.com/wp-content/uploads/2024/06/Red-One-Soundtrack-2024.webp	160	2024	2024-07-01 18:42:22.822
 12	Respira	Pelicula de ciencia ficcion.	https://www.youtube.com/watch?v=YaVCb1YFwEg	https://es.web.img3.acsta.net/img/4c/54/4c5409569d34b91c122abff5845d1eea.jpg	120	2024	2024-07-01 19:34:01.855
 13	Guason 2	El payaso	https://www.youtube.com/watch?v=rLbfdpdYh-U	https://hips.hearstapps.com/hmg-prod/images/joker-2-poster-660d1344c56e8.jpeg	180	2024	2024-07-01 20:22:49.089
 14	Intensamente 2	Peli para toda la familia	https://www.youtube.com/watch?v=S087KG9XdgM	https://www.eldiario.net/portal/wp-content/uploads/2024/03/IntensaMente-2-de-Disney-y-Pixar-estrena-el-13-de-junio-solo-en-cines-2-scaled.jpg	160	2024	2024-07-01 20:32:28.112
+2	venom 3	brutal pelicula de superheroes	https://www.youtube.com/watch?v=ncOH8-d4BYQ	https://m.media-amazon.com/images/M/MV5BYmIxMGNmOGYtMDQ4ZS00N2M0LWFiNWMtMWVlYjVkNzkzODc4XkEyXkFqcGc@._V1_.jpg	111	2020	2024-06-29 21:36:38.423
+15	Demonios 1	Pelicula de terror	https://www.youtube.com/watch?v=V4JCJBAWdRM	https://i.pinimg.com/originals/39/fd/1a/39fd1a6fcb7ef90084891c5a86e1a8d4.jpg	128	1985	2024-07-02 19:46:13.55
+16	Zootopia	Peli de disney	https://www.youtube.com/watch?v=8KNg1i4OG1o&list=PLz3WizklEOJepPbS4nLAla_15VYRU0Xk-&index=2	https://i.pinimg.com/originals/b7/b1/48/b7b1481a124a07babe533388d0521caa.jpg	120	2009	2024-07-02 19:50:10.942
 \.
 
 
@@ -388,7 +434,7 @@ SELECT pg_catalog.setval('public.clasificacion_id_clasificacion_seq', 14, true);
 -- Name: cliente_id_cliente_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.cliente_id_cliente_seq', 27, true);
+SELECT pg_catalog.setval('public.cliente_id_cliente_seq', 34, true);
 
 
 --
@@ -402,7 +448,7 @@ SELECT pg_catalog.setval('public.idioma_id_idioma_seq', 3, true);
 -- Name: pelicula_id_pelicula_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.pelicula_id_pelicula_seq', 14, true);
+SELECT pg_catalog.setval('public.pelicula_id_pelicula_seq', 16, true);
 
 
 --
@@ -555,6 +601,13 @@ ALTER TABLE ONLY public.idioma_pelicula
 
 ALTER TABLE ONLY public.idioma_pelicula
     ADD CONSTRAINT idioma_pelicula_id_pelicula_fkey FOREIGN KEY (id_pelicula) REFERENCES public.pelicula(id_pelicula) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- Name: TABLE pelicula; Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT SELECT ON TABLE public.pelicula TO manuel;
 
 
 --
