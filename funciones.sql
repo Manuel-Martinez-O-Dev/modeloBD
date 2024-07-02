@@ -64,7 +64,6 @@ DECLARE
 BEGIN
     SELECT nombre_usuario INTO v_nombre_usuario FROM cliente WHERE id_cliente = p_cliente_id;
 
-
     DELETE FROM cliente WHERE id_cliente = p_cliente_id;
 
     EXECUTE format('REVOKE ALL PRIVILEGES ON ALL TABLES IN SCHEMA public FROM %I', v_nombre_usuario);
